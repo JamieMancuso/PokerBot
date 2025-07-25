@@ -34,7 +34,16 @@ function resetTally() {
 
 
 function formatScoreboard() {
-  const ranks = ['🟧 Grandmaster', '🟥 Master', '🟨 Diamond', '🟩 Platinum', '🟦 Gold', '🟪 Silver', '🟫 Bronze'];
+  const ranks = [
+  '🟥 Grandmaster', // 1st
+  '🟧 Master',       // 2nd
+  '🟪 Diamond',      // 3rd
+  '🟦 Platinum',     // 4th
+  '🟨 Gold',         // 5th
+  '⬜ Silver',       // 6th
+  '🟫 Bronze'        // 7th+
+];
+
   const sorted = Object.entries(tally).sort((a, b) => b[1] - a[1]);
 
   if (sorted.length === 0) return "No transactions yet.";
