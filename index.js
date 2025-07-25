@@ -30,28 +30,7 @@ function resetTally() {
   saveSent();
 }
 
-if (content.startsWith('!remove')) {
-  const idMatch = content.match(/^!remove\s+<@!?(\d+)>/);
-  if (!idMatch) {
-    message.channel.send("❌ Usage: `!remove @user`");
-    return;
-  }
 
-  const userId = idMatch[1];
-  const name = `<@${userId}>`;
-
-  const existed = tally[userId] !== undefined || sent[userId] !== undefined;
-
-  delete tally[userId];
-  delete sent[userId];
-  saveTally();
-  saveSent();
-
-  message.channel.send(existed
-    ? `🗑️ Removed ${name} from the scoreboard.`
-    : `ℹ️ ${name} was not on the scoreboard.`);
-  return;
-}
 
 
 function formatScoreboard() {
@@ -86,6 +65,30 @@ client.on('messageCreate', (message) => {
   // !sent or !moneyMoved
   if (content === '!sent' || content === '!moneyMoved') {
     message.channel.send(`💰 Total Money Sent:\n${formatSent()}`);
+    return;
+  }
+
+
+  if (content.startsWith('!remove')) {
+    const idMatch = content.match(/^!remove\s+<@!?(\d+)>/);
+    if (!idMatch) {
+      message.channel.send("❌ Usage: `!remove @user`");
+      return;
+    }
+
+    const userId = idMatch[1];
+    const name = `<@${userId}>`;
+
+    const existed = tally[userId] !== undefined || sent[userId] !== undefined;
+
+    delete tally[userId];
+    delete sent[userId];
+    saveTally();
+    saveSent();
+
+    message.channel.send(existed
+      ? `🗑️ Removed ${name} from the scoreboard.`
+      : `ℹ️ ${name} was not on the scoreboard.`);
     return;
   }
 
