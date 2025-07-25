@@ -105,7 +105,8 @@ client.on('messageCreate', (message) => {
   }
 
   // Handle payments like: "10 @User"
-  const match = content.match(/^(\d+(?:\.\d{1,2})?)\s*,\s*<@!?(\d+)>/);
+  const match = content.match(/^(-?\d+(?:\.\d{1,2})?)\s*,\s*<@!?(\d+)>/);
+
 
   const amount = parseFloat(match[1]);
   const receiverId = match[2];
