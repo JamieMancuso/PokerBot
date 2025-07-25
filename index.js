@@ -30,18 +30,43 @@ function resetTally() {
   saveSent();
 }
 
+if (content.startsWith('!remove')) {
+  const idMatch = content.match(/^!remove\s+<@!?(\d+)>/);
+  if (!idMatch) {
+    message.channel.send("❌ Usage: `!remove @user`");
+    return;
+  }
+
+  const userId = idMatch[1];
+  const name = `<@${userId}>`;
+
+  const existed = tally[userId] !== undefined || sent[userId] !== undefined;
+
+  delete tally[userId];
+  delete sent[userId];
+  saveTally();
+  saveSent();
+
+  message.channel.send(existed
+    ? `🗑️ Removed ${name} from the scoreboard.`
+    : `ℹ️ ${name} was not on the scoreboard.`);
+  return;
+}
+
+
 function formatScoreboard() {
-  const ranks = ['🟥 Master', '🟧 Diamond', '🟨 Platinum', '🟦 Gold', '🟪 Silver', '🟫 Bronze'];
+  const ranks = ['🟧 Grandmaster', '🟥 Master', '🟨 Diamond', '🟩 Platinum', '🟦 Gold', '🟪 Silver', '🟫 Bronze'];
   const sorted = Object.entries(tally).sort((a, b) => b[1] - a[1]);
+
   if (sorted.length === 0) return "No transactions yet.";
 
-  return sorted
-    .map(([id, total], index) => {
-      const rank = ranks[Math.min(index, ranks.length - 1)];
-      return `${rank}: <@${id}> — $${total.toFixed(2)}`;
-    })
-    .join('\n');
+  return sorted.map(([id, total], index) => {
+    const rankIndex = Math.floor((index / sorted.length) * ranks.length);
+    const rank = ranks[Math.min(rankIndex, ranks.length - 1)];
+    return `${rank}: <@${id}> — $${total.toFixed(2)}`;
+  }).join('\n');
 }
+
 
 // ---------- Set up Discord client ----------
 const client = new Client({
@@ -82,19 +107,32 @@ client.on('messageCreate', (message) => {
   const amount = parseFloat(match[1]);
   const receiverId = match[2];
   const senderId = message.author.id;
+  const absAmount = Math.abs(amount);
 
+  // Initialize accounts if needed
   if (!tally[senderId]) tally[senderId] = 0;
   if (!tally[receiverId]) tally[receiverId] = 0;
   if (!sent[senderId]) sent[senderId] = 0;
+  if (!sent[receiverId]) sent[receiverId] = 0;
 
-  tally[senderId] -= amount;
-  tally[receiverId] += amount;
-  sent[senderId] += amount;
+  // Handle normal payment (positive): sender pays receiver
+  if (amount >= 0) {
+    tally[senderId] -= absAmount;
+    tally[receiverId] += absAmount;
+    sent[senderId] += absAmount;
+    message.channel.send(`✅ Recorded: $${absAmount.toFixed(2)} paid to <@${receiverId}>`);
+  } else {
+    // Handle negative: receiver pays sender
+    tally[receiverId] -= absAmount;
+    tally[senderId] += absAmount;
+    sent[receiverId] += absAmount;
+    message.channel.send(`✅ Recorded: <@${receiverId}> paid $${absAmount.toFixed(2)} to <@${senderId}>`);
+  }
 
   saveTally();
   saveSent();
 
-  message.channel.send(`✅ Recorded: $${amount.toFixed(2)} paid to <@${receiverId}>`);
 });
-
-client.login(process.env.TOKEN);
+client.login(process.env.TOKEN).catch(err => {
+  console.error("❌ Discord login failed:", err);
+});
